@@ -1,0 +1,62 @@
+services:
+  service-users:
+    build: ./users-service
+    ports:
+    - "3001:3000"
+    restart: always
+    environment:
+      DB_HOST: users-db
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: usersdb
+      DB_PORT: 5432
+    env_file:
+      - user-service/.env
+    depends_on:
+      users-db:
+        condition: service_healthy
+    networks: [AgendaFacil_Users]
+
+  users-db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: usersdb
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d usersdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - users_data:/var/lib/postgresql/data
+    networks:
+      - AgendaFacil_Users
+  
+  redis-users:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+    networks: [AgendaFacil_Users]
+  
+  nginx-users:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-users
+    networks: [AgendaFacil_Users]
+
+volumes:
+  users_data:
+
+networks:
+  AgendaFacil_Users:
+    driver: bridge
