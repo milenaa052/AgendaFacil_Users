@@ -11,7 +11,7 @@ services:
       DB_NAME: usersdb
       DB_PORT: 5432
     env_file:
-      - user-service/.env
+      - users-service/.env
     depends_on:
       users-db:
         condition: service_healthy
