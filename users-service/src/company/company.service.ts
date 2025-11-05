@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Company } from './company.model';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { UserType } from './company.model';
 
 @Injectable()
 export class CompanyService {
@@ -21,7 +22,10 @@ export class CompanyService {
         }
 
         try {
-            return this.companyModel.create(createCompanyDto as any);
+            return await this.companyModel.create({
+                ...createCompanyDto,
+                type: UserType.COMPANY
+            } as any);
         } catch (error) {
             console.error('Erro ao criar usuário:', error);
             throw error;

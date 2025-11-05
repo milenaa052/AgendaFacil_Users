@@ -1,5 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { UserType } from '../customer.model';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
     @IsNotEmpty() name: string;
@@ -12,5 +11,4 @@ export class CreateCustomerDto {
     @IsOptional() @IsString() complement?: string;
     @IsEmail() email: string;
     @IsNotEmpty() password: string;
-    @IsEnum(UserType) @IsNotEmpty() type: UserType;
 }
