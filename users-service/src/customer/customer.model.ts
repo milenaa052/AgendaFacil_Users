@@ -78,7 +78,8 @@ export class Customer extends Model<Customer> {
 
     @Column({ 
         type: DataType.ENUM(...Object.values(UserType)),
-        allowNull: false 
+        allowNull: false,
+        defaultValue: UserType.CUSTOMER
     })
     declare type: UserType;
 
