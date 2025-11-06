@@ -1,5 +1,6 @@
-import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, HasOne } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, HasMany } from 'sequelize-typescript';
 import * as bcrypt from 'bcrypt';
+import { Favorites } from 'src/favorites/favorites.model';
 
 export enum UserType {
     CUSTOMER = 'CUSTOMER',
@@ -105,6 +106,9 @@ export class Company extends Model<Company> {
         defaultValue: UserType.COMPANY 
     })
     declare type: UserType;
+
+    @HasMany(() => Favorites)
+    declare favorites: Favorites[];
 
     async validatePassword(password: string): Promise<boolean> {
         return await bcrypt.compare(password, this.password);
