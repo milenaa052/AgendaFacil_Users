@@ -2,11 +2,15 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException,
 import { InjectModel } from '@nestjs/sequelize';
 import { Favorites } from './favorites.model';
 import { CreateFavoritesDto } from './dto/create-favorites.dto';
+import { Customer } from 'src/customer/customer.model';
+import { Company } from 'src/company/company.model';
 
 @Injectable()
 export class FavoritesService {
     constructor(
         @InjectModel(Favorites) private favoritesModel: typeof Favorites,
+        @InjectModel(Customer) private customerModel: typeof Customer,
+        @InjectModel(Company) private companyModel: typeof Company
     ) {}
 
     async create(createFavoritesDto: CreateFavoritesDto) {
@@ -15,18 +19,26 @@ export class FavoritesService {
             return { message: 'All fields are required' };
         }
 
-        if(!createFavoritesDto.customerId) {
-            return { message: 'Customer not found' };
-        }
+       const customer = await this.customerModel.findByPk(createFavoritesDto.customerId);
+       if(!customer) {
+            return { message: 'Customer not found' }
+       }
 
-        if(!createFavoritesDto.companyId) {
-            return { message: 'Company not found' };
-        }
+       const company = await this.companyModel.findByPk(createFavoritesDto.companyId);
+       if(!company) {
+            return { message: 'Company not found' }
+       }
 
         try {
-            return await this.favoritesModel.create({
+            const favorite = await this.favoritesModel.create({
                 ...createFavoritesDto
             } as any);
+
+            return {
+                message: 'Favorite created successfully',
+                favorite
+            };
+
         } catch (error) {
             return { message: 'Error when creating favorites' };
         }
