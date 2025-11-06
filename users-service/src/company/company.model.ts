@@ -1,6 +1,7 @@
 import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, HasMany } from 'sequelize-typescript';
 import * as bcrypt from 'bcrypt';
 import { Favorites } from 'src/favorites/favorites.model';
+import { Review } from 'src/reviews/review.model';
 
 export enum UserType {
     CUSTOMER = 'CUSTOMER',
@@ -109,6 +110,9 @@ export class Company extends Model<Company> {
 
     @HasMany(() => Favorites)
     declare favorites: Favorites[];
+
+    @HasMany(() => Review)
+    declare reviews: Review[];
 
     async validatePassword(password: string): Promise<boolean> {
         return await bcrypt.compare(password, this.password);
