@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { cpf } from 'cpf-cnpj-validator';
 import { InjectModel } from '@nestjs/sequelize';
 import { Customer } from './customer.model';
@@ -11,6 +11,7 @@ import { CompanyService } from 'src/company/company.service';
 export class CustomerService {
     constructor(
         @InjectModel(Customer) private customerModel: typeof Customer,
+        @Inject(forwardRef(() => CompanyService))
         private companyService: CompanyService
     ) {}
 
@@ -34,8 +35,16 @@ export class CustomerService {
             }
         }
 
+        const existingCustomer = await this.customerModel.findOne({
+            where: { cpf: createCustomerDto.cpf }
+        });
+
+        if (existingCustomer) {
+            throw new BadRequestException('CPF já cadastrado!');
+        }
+
         if(!cpf.isValid(createCustomerDto.cpf)) {
-            throw new BadRequestException('CPF inválido ou inexistente!')
+            throw new BadRequestException('CPF inválido ou inexistente!');
         }
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -90,25 +99,37 @@ export class CustomerService {
         });
     }
 
-    async update(id: number, customerId: number, dto: UpdateCustomerDto) {
+    async update(id: number, customerId: number, updateCustomerDto: UpdateCustomerDto) {
         if (id !== customerId) {
             throw new ForbiddenException('Você não tem permissão para editar este usuário!');
         }
 
         const customer = await this.customerModel.findByPk(id);
-        if (!customer) throw new NotFoundException('Usuário não encontrado!');
+        if (!customer) {
+            throw new NotFoundException('Usuário não encontrado!');
+        }
 
-        if (dto.email && dto.email !== customer.email) {
+        if (updateCustomerDto.cpf && updateCustomerDto.cpf !== customer.cpf) {
+            const existingCustomer = await this.customerModel.findOne({
+                where: { cpf: updateCustomerDto.cpf }
+            });
+
+            if (existingCustomer) {
+                throw new BadRequestException('CPF já cadastrado!');
+            }
+        }
+
+        if (updateCustomerDto.email && updateCustomerDto.email !== customer.email) {
             throw new BadRequestException('Email não pode ser alterado!');
         }
 
-        if (dto.currentPassword && dto.newPassword) {
-            const correctPassword = await customer.validatePassword(dto.currentPassword);
+        if (updateCustomerDto.currentPassword && updateCustomerDto.newPassword) {
+            const correctPassword = await customer.validatePassword(updateCustomerDto.currentPassword);
             if (!correctPassword) {
                 throw new BadRequestException('Senha atual incorreta!');
             }
 
-            const validate = Customer.validatePasswordLevel(dto.newPassword);
+            const validate = Customer.validatePasswordLevel(updateCustomerDto.newPassword);
             if (!validate.validate) {
                 throw new BadRequestException({
                     error: 'Senha muito fraca!',
@@ -116,10 +137,10 @@ export class CustomerService {
                 });
             }
 
-            customer.password = dto.newPassword;
+            customer.password = updateCustomerDto.newPassword;
         }
 
-        Object.assign(customer, dto);
+        Object.assign(customer, updateCustomerDto);
         await customer.save();
         return customer;
     }
