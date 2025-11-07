@@ -9,7 +9,7 @@ export class UpdateCustomerDto {
     @IsOptional() @IsString() street?: string;
     @IsOptional() @IsNumber() number?: number;
     @IsOptional() @IsString() complement?: string;
-    @IsOptional() @IsEmail() email?: string;
+    @IsOptional() @IsEmail({}, { message: 'Email inválido' }) email?: string;
 
     @IsOptional() @IsString() currentPassword?: string;
     @IsOptional() @IsString() newPassword?: string;
