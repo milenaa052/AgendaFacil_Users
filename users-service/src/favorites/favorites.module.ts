@@ -1,13 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Favorites } from './favorites.model';
 import { FavoritesService } from './favorites.service';
 import { FavoritesController } from './favorites.controller';
-import { Customer } from 'src/customer/customer.model';
-import { Company } from 'src/company/company.model';
+import { CustomerModule } from 'src/customer/customer.module';
+import { CompanyModule } from 'src/company/company.module';
 
 @Module({
-    imports: [SequelizeModule.forFeature([Favorites, Customer, Company])],
+    imports: [SequelizeModule.forFeature([Favorites]),
+        forwardRef(() => CompanyModule),
+        forwardRef(() => CustomerModule)
+    ],
     controllers: [FavoritesController],
     providers: [FavoritesService],
     exports: [FavoritesService],

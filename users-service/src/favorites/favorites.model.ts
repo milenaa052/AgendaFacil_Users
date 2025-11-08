@@ -2,8 +2,13 @@ import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize
 import { Company } from 'src/company/company.model';
 import { Customer } from 'src/customer/customer.model';
 
+export interface FavoritesCreationAttributes {
+    customerId: number;
+    companyId: number;
+}
+
 @Table({ tableName: 'Favorites', timestamps: false, modelName: 'Favorites' })
-export class Favorites extends Model<Favorites> {
+export class Favorites extends Model<Favorites, FavoritesCreationAttributes> {
     @Column({
         type: DataType.INTEGER,
         autoIncrement: true,

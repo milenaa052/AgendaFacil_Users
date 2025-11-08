@@ -1,6 +1,6 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNumber } from 'class-validator';
 
 export class CreateFavoritesDto {
-    @IsNumber() @IsNotEmpty() customerId: number;
-    @IsNumber() @IsNotEmpty() companyId: number;
+    @IsNumber() customerId: number;
+    @IsNumber() companyId: number;
 }
