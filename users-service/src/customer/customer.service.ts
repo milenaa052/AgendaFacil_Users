@@ -65,21 +65,25 @@ export class CustomerService {
             });
         }
  
-        const customerData = {
-            name: createCustomerDto.name,
-            cpf: createCustomerDto.cpf,
-            phone: createCustomerDto.phone,
-            state: createCustomerDto.state,
-            city: createCustomerDto.city,
-            street: createCustomerDto.street,
-            number: createCustomerDto.number,
-            complement: createCustomerDto.complement,
-            email: createCustomerDto.email,
-            password: createCustomerDto.password,
-            type: UserType.CUSTOMER
-        };
+        try {
+            const customerData = {
+                name: createCustomerDto.name,
+                cpf: createCustomerDto.cpf,
+                phone: createCustomerDto.phone,
+                state: createCustomerDto.state,
+                city: createCustomerDto.city,
+                street: createCustomerDto.street,
+                number: createCustomerDto.number,
+                complement: createCustomerDto.complement,
+                email: createCustomerDto.email,
+                password: createCustomerDto.password,
+                type: UserType.CUSTOMER
+            };
 
-        return await this.customerModel.create(customerData);
+            return await this.customerModel.create(customerData);
+        } catch (error) {
+            throw new BadRequestException('Erro ao criar o usuário!');
+        }
     }
 
     async findAll() {
@@ -140,8 +144,12 @@ export class CustomerService {
             customer.password = updateCustomerDto.newPassword;
         }
 
-        Object.assign(customer, updateCustomerDto);
-        await customer.save();
-        return customer;
+        try {
+            Object.assign(customer, updateCustomerDto);
+            await customer.save();
+            return customer;
+        } catch (error) {
+            throw new BadRequestException('Erro ao atualizar o usuário!');
+        }
     }
 }

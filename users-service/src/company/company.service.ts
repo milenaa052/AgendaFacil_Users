@@ -66,25 +66,29 @@ export class CompanyService {
             });
         }
 
-        const companyData = {
-            name: createCompanyDto.name,
-            corporateReason: createCompanyDto.corporateReason,
-            cnpj: createCompanyDto.cnpj,
-            rayKm: createCompanyDto.rayKm,
-            phone: createCompanyDto.phone,
-            state: createCompanyDto.state,
-            city: createCompanyDto.city,
-            street: createCompanyDto.street,
-            number: createCompanyDto.number,
-            complement: createCompanyDto.complement,
-            category: createCompanyDto.category,
-            profession: createCompanyDto.profession,
-            email: createCompanyDto.email,
-            password: createCompanyDto.password,
-            type: UserType.COMPANY
-        };
+        try {
+            const companyData = {
+                name: createCompanyDto.name,
+                corporateReason: createCompanyDto.corporateReason,
+                cnpj: createCompanyDto.cnpj,
+                rayKm: createCompanyDto.rayKm,
+                phone: createCompanyDto.phone,
+                state: createCompanyDto.state,
+                city: createCompanyDto.city,
+                street: createCompanyDto.street,
+                number: createCompanyDto.number,
+                complement: createCompanyDto.complement,
+                category: createCompanyDto.category,
+                profession: createCompanyDto.profession,
+                email: createCompanyDto.email,
+                password: createCompanyDto.password,
+                type: UserType.COMPANY
+            };
 
-        return await this.companyModel.create(companyData);
+            return await this.companyModel.create(companyData);
+        } catch (error) {
+            throw new BadRequestException('Erro ao criar usuário!');
+        }
     }
 
     async findAll() {
@@ -141,8 +145,13 @@ export class CompanyService {
             company.password = updateCompanyDto.newPassword;
         }
 
-        Object.assign(company, updateCompanyDto);
-        await company.save();
-        return company;
+        try {
+            Object.assign(company, updateCompanyDto);
+            await company.save();
+            return company;
+
+        } catch (error) {
+            throw new BadRequestException('Erro ao atualizar o usuário!');
+        }
     }
 }

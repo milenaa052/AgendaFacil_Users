@@ -29,12 +29,16 @@ export class FavoritesService {
             throw new NotFoundException('Empresa não encontrada!');
         }
 
-        const favoritesData = {
-            customerId: createFavoritesDto.customerId,
-            companyId: createFavoritesDto.companyId
-        }
+        try {
+            const favoritesData = {
+                customerId: createFavoritesDto.customerId,
+                companyId: createFavoritesDto.companyId
+            }
 
-        return await this.favoritesModel.create(favoritesData);
+            return await this.favoritesModel.create(favoritesData);
+        } catch (error) {
+            throw new BadRequestException('Erro ao adicionar aos favoritos!');
+        }
     }
 
     async findAll() {
