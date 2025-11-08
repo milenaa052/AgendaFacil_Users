@@ -19,22 +19,22 @@ export class ReviewService {
         const requiredFields = ['customerId', 'companyId', 'date', 'rating', 'comment'];
         for (const field of requiredFields) {
             if (!createReviewDto[field]) {
-                throw new BadRequestException(`Field ${field} is required`);
+                throw new BadRequestException('Todos os campos são obrigatórios!');
             }
         }
 
         const customer = await this.customerModel.findByPk(createReviewDto.customerId);
-        if (!customer) {
-            throw new NotFoundException('Customer not found');
+        if(!customer) {
+            throw new NotFoundException('Cliente não encontrado!');
         }
 
         const company = await this.companyModel.findByPk(createReviewDto.companyId);
-        if (!company) {
-            throw new NotFoundException('Company not found');
+        if(!company) {
+            throw new NotFoundException('Empresa não encontrada!');
         }
 
         if (createReviewDto.rating < 1 || createReviewDto.rating > 5) {
-            throw new BadRequestException('Rating must be between 1 and 5');
+            throw new BadRequestException('A avaliação deve estar entre 1 e 5');
         }
 
         try {
@@ -49,7 +49,7 @@ export class ReviewService {
 
             return await this.reviewModel.create(reviewData);
         } catch (error) {
-            throw new BadRequestException('Error creating assessment');
+            throw new BadRequestException('Erro ao criar a avaliação!');
         }
     }
 
@@ -60,14 +60,14 @@ export class ReviewService {
     async findById(id: number) {
         const review = await this.reviewModel.findByPk(id);
         
-        if (!review) throw new NotFoundException('Review not found');
+        if (!review) throw new NotFoundException('Avaliação não encontrada!');
         return review;
     }
 
     async findByCompanyId(companyId: number) {
         const company = await this.companyModel.findByPk(companyId);
         if(!company) {
-            throw new NotFoundException('Company not found');
+            throw new NotFoundException('Empresa não encontrada!');
         }
 
         const reviews = await this.reviewModel.findAll({
@@ -89,20 +89,30 @@ export class ReviewService {
 
     async update(id: number, dto: UpdateReviewDto) {
         const review = await this.reviewModel.findByPk(id);
-        if (!review) throw new NotFoundException('Review not found');
+        if (!review) {
+            throw new NotFoundException('Avaliação não encontrada!');
+        }
 
         if (dto.customerId) {
             const customer = await this.customerModel.findByPk(dto.customerId);
-            if (!customer) throw new NotFoundException('Customer not found');
+            if (!customer) {
+                throw new NotFoundException('Cliente não encontrado"!');
+            }
         }
 
         if (dto.companyId) {
             const company = await this.companyModel.findByPk(dto.companyId);
-            if (!company) throw new NotFoundException('Company not found');
+            if (!company) {
+                throw new NotFoundException('Empresa não encontrada!');
+            }
         }
 
         if (dto.rating && (dto.rating < 1 || dto.rating > 5)) {
-            throw new BadRequestException('Rating must be between 1 and 5');
+            throw new BadRequestException('A avaliação deve estar entre 1 e 5');
+        }
+
+        if (dto.status && dto.status !== ReviewStatus.ACTIVE && dto.status !== ReviewStatus.INACTIVE) {
+            throw new BadRequestException('Status deve ser ACTIVE ou INACTIVE');
         }
 
         try {
@@ -110,7 +120,7 @@ export class ReviewService {
             await review.save();
             return review;
         } catch (error) {
-            throw new BadRequestException(`Error updating review: ${error.message}`);
+            throw new BadRequestException('Erro ao atualizar a avaliação!');
         }
     }
 }

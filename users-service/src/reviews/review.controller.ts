@@ -3,7 +3,6 @@ import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-reviews.dto';
 import { AuthGuard } from '@nestjs/passport';
-import type { AuthRequest } from '../auth/types/auth-request.interface';
 
 @Controller('reviews')
 export class ReviewController {
@@ -37,14 +36,8 @@ export class ReviewController {
     @UseGuards(AuthGuard('jwt'))
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateReviewDto: UpdateReviewDto,
-        @Req() req: AuthRequest
+        @Body() updateReviewDto: UpdateReviewDto
     ) {
-        try {
-            return await this.reviewService.update(id, updateReviewDto);
-        } catch (error) {
-            console.error('Error in update controller');
-            throw error;
-        }
+        return await this.reviewService.update(id, updateReviewDto);
     }
 }
