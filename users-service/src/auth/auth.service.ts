@@ -35,12 +35,12 @@ export class AuthService {
         }
         
         if (!user) {
-            throw new UnauthorizedException('User not found');
+            throw new UnauthorizedException('Credenciais Inválidas!');
         }
 
         const isPasswordValid = await user.validatePassword(password);
         if (!isPasswordValid) {
-            throw new UnauthorizedException('Invalid credentials');
+            throw new UnauthorizedException('Credenciais Inválidas!');
         }
 
         return {
@@ -57,12 +57,12 @@ export class AuthService {
         const { email, password } = loginDto;
 
         if (!email || !password) {
-            throw new BadRequestException('Email and password are required');
+            throw new BadRequestException('Email e senha são obrigatórios!');
         }
 
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            throw new BadRequestException('Invalid email format');
+            throw new BadRequestException('Formato de email inválido!');
         }
 
         const user = await this.validateUser(email, password);
@@ -75,7 +75,7 @@ export class AuthService {
         };
 
         return {
-            message: 'Login successfully',
+            message: 'Login realizado com sucesso!',
             token: this.jwtService.sign(payload),
             user: user
         };
@@ -91,11 +91,11 @@ export class AuthService {
         }
         
         if (!user) {
-            throw new UnauthorizedException('User not found');
+            throw new UnauthorizedException('Usuário não encontrado!');
         }
 
         return {
-            message: 'User successfully authenticated',
+            message: 'Usuário autenticado com sucesso!',
             user: {
                 idUser: userType === 'CUSTOMER' 
                     ? (user as Customer).idCustomer 

@@ -8,8 +8,26 @@ export enum UserType {
     COMPANY = 'COMPANY'
 }
 
+export interface CompanyCreationAttributes {
+    name: string;
+    corporateReason: string;
+    cnpj: string;
+    rayKm: number;
+    phone: string;
+    state: string;
+    city: string;
+    street: string;
+    number: number;
+    complement?: string;
+    category: string;
+    profession: string;
+    email: string;
+    password: string;
+    type: UserType;
+}
+
 @Table({ tableName: 'Company', timestamps: false, modelName: 'Company' })
-export class Company extends Model<Company> {
+export class Company extends Model<Company, CompanyCreationAttributes> {
     @Column({
         type: DataType.INTEGER,
         autoIncrement: true,

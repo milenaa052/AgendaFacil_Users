@@ -1,14 +1,14 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
-    @IsNotEmpty() name: string;
-    @IsNotEmpty() cpf: string;
-    @IsNotEmpty() phone: string;
-    @IsNotEmpty() state: string;
-    @IsNotEmpty() city: string;
-    @IsNotEmpty() street: string;
+    @IsString() name: string;
+    @IsString() cpf: string;
+    @IsString() phone: string;
+    @IsString() state: string;
+    @IsString() city: string;
+    @IsString() street: string;
     @IsNumber() number: number;
     @IsOptional() @IsString() complement?: string;
-    @IsEmail() email: string;
-    @IsNotEmpty() password: string;
+    @IsEmail({}, { message: 'Email inválido' }) email: string;
+    @IsString() password: string;
 }
