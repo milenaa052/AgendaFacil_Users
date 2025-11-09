@@ -1,8 +1,9 @@
 services:
   service-users:
     build: ./users-service
+    container_name: service-users
     ports:
-    - "3001:3000"
+      - "3001:3000"
     restart: always
     environment:
       DB_HOST: users-db
@@ -15,10 +16,12 @@ services:
     depends_on:
       users-db:
         condition: service_healthy
-    networks: [AgendaFacil_Users]
+    networks:
+      - agendafacil_network
 
   users-db:
     image: postgres:15
+    container_name: users-db
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -34,17 +37,20 @@ services:
     volumes:
       - users_data:/var/lib/postgresql/data
     networks:
-      - AgendaFacil_Users
-  
+      - agendafacil_network
+
   redis-users:
     image: redis:7
+    container_name: redis-users
     restart: always
     ports:
       - "6379:6379"
-    networks: [AgendaFacil_Users]
-  
+    networks:
+      - agendafacil_network
+
   nginx-users:
     image: nginx:alpine
+    container_name: nginx-users
     restart: always
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -52,11 +58,12 @@ services:
       - "8080:8080"
     depends_on:
       - service-users
-    networks: [AgendaFacil_Users]
+    networks:
+      - agendafacil_network
 
 volumes:
   users_data:
 
 networks:
-  AgendaFacil_Users:
+  agendafacil_network:
     driver: bridge
