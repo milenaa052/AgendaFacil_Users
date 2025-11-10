@@ -6,6 +6,7 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { UserType } from './company.model';
 import { CustomerService } from 'src/customer/customer.service';
+import { HttpService } from 'src/http/http.service';
 
 @Injectable()
 export class CompanyService {
@@ -13,7 +14,8 @@ export class CompanyService {
         @InjectModel(Company)
         private readonly companyModel: typeof Company,
         @Inject(forwardRef(() => CustomerService))
-        private customerService: CustomerService
+        private customerService: CustomerService,
+        private http: HttpService
     ) {}
 
     async checkEmailExists(email: string) {
@@ -106,6 +108,71 @@ export class CompanyService {
         return this.companyModel.findOne({
             where: { email }
         });
+    }
+
+    async findByAvailableCompanies(
+        state: string,
+        city: string,
+        category: string,
+        profession: string,
+        date: string,
+        hour: string,
+        token: string
+    ) {
+        if (!state || !city || !category || !profession || !date || !hour) {
+            throw new BadRequestException('Todos os parâmetros são obrigatórios!');
+        }
+
+        const companies = await this.companyModel.findAll({
+            where: { state, city, category, profession }
+        });
+
+        if (!companies.length) {
+            throw new NotFoundException('Nenhuma empresa encontrada com os filtros informados!');
+        }
+
+        const availableCompanies: Company[] = [];
+
+        for (const company of companies) {
+            try {
+                const response = await this.http.instance.get(
+                    `/scheduling-company/company/${company.idCompany}`,
+                    { headers: { Authorization: token } }
+                );
+
+                const schedulings = response.data;
+
+                const hasConflict = schedulings.some((scheduling: any) => {
+                    if (scheduling.startDate !== date) return false;
+
+                    const toMinutes = (h: string) => {
+                        const [hh, mm] = h.split(':').map(Number);
+                        return hh * 60 + mm;
+                    };
+
+                    const requested = toMinutes(hour);
+                    const start = toMinutes(scheduling.startHour);
+                    const end = toMinutes(scheduling.endHour);
+
+                    return requested >= start && requested < end;
+                });
+
+                if (!hasConflict) {
+                    availableCompanies.push(company);
+                }
+
+            } catch (error) {
+                if (error.response?.status === 404) {
+                    availableCompanies.push(company);
+                } else {
+                    throw new BadRequestException(
+                        error.response?.data?.message || 'Erro ao verificar disponibilidade'
+                    );
+                }
+            }
+        }
+
+        return availableCompanies;
     }
 
     async update(id: number, companyId: number, updateCompanyDto: UpdateCompanyDto) {
