@@ -66,4 +66,4 @@ volumes:
 
 networks:
   agendafacil_network:
-    driver: bridge
+    external: true
