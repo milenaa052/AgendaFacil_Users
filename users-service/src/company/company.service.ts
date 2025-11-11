@@ -138,7 +138,7 @@ export class CompanyService {
         });
 
         if (!companies.length) {
-            throw new NotFoundException('Nenhuma empresa encontrada com os filtros informados!');
+            throw new NotFoundException(`Nenhum profissional cadastrado para a profissão ${profession} na sua região!`);
         }
 
         const availableCompanies: {
@@ -217,6 +217,12 @@ export class CompanyService {
                 }
             }
         }
+
+        if (!availableCompanies.length) {
+        throw new NotFoundException(
+            'Nenhum profissional com horário disponível, volte na tela anterior e escolha outro horário.'
+        );
+    }
         return availableCompanies;
     }
 
