@@ -6,6 +6,8 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { UserType } from './company.model';
 import { CustomerService } from 'src/customer/customer.service';
+import { Review } from 'src/reviews/review.model';
+import { HttpService } from 'src/http/http.service';
 
 @Injectable()
 export class CompanyService {
@@ -13,7 +15,9 @@ export class CompanyService {
         @InjectModel(Company)
         private readonly companyModel: typeof Company,
         @Inject(forwardRef(() => CustomerService))
-        private customerService: CustomerService
+        private customerService: CustomerService,
+        @InjectModel(Review) private reviewModel: typeof Review,
+        private http: HttpService
     ) {}
 
     async checkEmailExists(email: string) {
@@ -106,6 +110,109 @@ export class CompanyService {
         return this.companyModel.findOne({
             where: { email }
         });
+    }
+
+    async findByAvailableCompanies(
+        state: string,
+        city: string,
+        category: string,
+        profession: string,
+        date: string,
+        hour: string,
+        token: string
+    ): Promise<
+        {
+            idCompany: number;
+            name: string;
+            reviews: Review[];
+        }[]>  
+    {
+        if (!state || !city || !category || !profession || !date || !hour) {
+            throw new BadRequestException('Todos os parâmetros são obrigatórios!');
+        }
+
+        const companies = await this.companyModel.findAll({
+            where: { state, city, category, profession }
+        });
+
+        if (!companies.length) {
+            throw new NotFoundException('Nenhuma empresa encontrada com os filtros informados!');
+        }
+
+        const availableCompanies: {
+            idCompany: number;
+            name: string;
+            averageRating: number;
+            reviews: Review[];
+        }[] = [];
+
+        for (const company of companies) {
+            try {
+                const response = await this.http.instance.get(
+                    `/scheduling-company/company/${company.idCompany}`,
+                    { headers: { Authorization: token } }
+                );
+
+                const schedulings = response.data;
+
+                const hasConflict = schedulings.some((scheduling: any) => {
+                    if (scheduling.startDate !== date) return false;
+
+                    const toMinutes = (h: string) => {
+                        const [hh, mm] = h.split(':').map(Number);
+                        return hh * 60 + mm;
+                    };
+
+                    const requested = toMinutes(hour);
+                    const start = toMinutes(scheduling.startHour);
+                    const end = toMinutes(scheduling.endHour);
+
+                    return requested >= start && requested < end;
+                });
+
+                if (!hasConflict) {
+                    const reviews = await this.reviewModel.findAll({
+                        where: { companyId: company.idCompany },
+                        order: [['date', 'DESC']]
+                    });
+
+                    const averageRating = reviews.length 
+                        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+                        : 0;
+
+                    availableCompanies.push({
+                        idCompany: company.idCompany,
+                        name: company.name,
+                        averageRating,
+                        reviews: reviews as Review[]
+                    });
+                }
+            } catch (error: unknown) {
+                const err = error as any;
+
+                if (err.response?.status === 404) {
+                    const reviews = await this.reviewModel.findAll({
+                        where: { companyId: company.idCompany },
+                        order: [['date', 'DESC']]
+                    });
+                    const averageRating = reviews.length 
+                        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+                        : 0;
+
+                    availableCompanies.push({
+                        idCompany: company.idCompany,
+                        name: company.name,
+                        averageRating,
+                        reviews: reviews as Review[]
+                    });
+                } else {
+                    throw new BadRequestException(
+                        err.response?.data?.message || 'Erro ao verificar disponibilidade'
+                    );
+                }
+            }
+        }
+        return availableCompanies;
     }
 
     async update(id: number, companyId: number, updateCompanyDto: UpdateCompanyDto) {

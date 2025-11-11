@@ -10,7 +10,7 @@ import { Company } from 'src/company/company.model';
     imports: [SequelizeModule.forFeature([Review, Customer, Company])],
     controllers: [ReviewController],
     providers: [ReviewService],
-    exports: [ReviewService],
+    exports: [ReviewService, SequelizeModule],
 })
 
 export class ReviewModule {}

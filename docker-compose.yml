@@ -11,6 +11,7 @@ services:
       DB_PASS: postgres
       DB_NAME: usersdb
       DB_PORT: 5432
+      SCHEDULING_API: http://service-scheduling:3000
     env_file:
       - users-service/.env
     depends_on:

@@ -26,6 +26,29 @@ export class CompanyController {
         return this.companyService.findById(id);
     }
 
+    @Get(':state/:city/:category/:profession/:date/:hour')
+    @UseGuards(AuthGuard('jwt'))
+    async findByAvailableCompanies(
+        @Param('state') state: string,
+        @Param('city') city: string,
+        @Param('category') category: string,
+        @Param('profession') profession: string,
+        @Param('date') date: string,
+        @Param('hour') hour: string,
+        @Req() req
+    ) {
+            const token = req.headers.authorization;
+            return this.companyService.findByAvailableCompanies(
+                state,
+                city,
+                category,
+                profession,
+                date,
+                hour,
+                token
+            );
+    }
+
     @Put(':id')
     @UseGuards(AuthGuard('jwt'))
     async update(
