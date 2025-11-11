@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, HasMany } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, BeforeCreate, BeforeUpdate, HasMany, AllowNull } from 'sequelize-typescript';
 import * as bcrypt from 'bcrypt';
 import { Favorites } from 'src/favorites/favorites.model';
 import { Review } from 'src/reviews/review.model';
@@ -21,6 +21,7 @@ export interface CompanyCreationAttributes {
     complement?: string;
     category: string;
     profession: string;
+    averagePrice: number;
     email: string;
     password: string;
     type: UserType;
@@ -106,6 +107,12 @@ export class Company extends Model<Company, CompanyCreationAttributes> {
         allowNull: false,
     })
     declare profession: string;
+
+    @Column({
+        type: DataType.FLOAT,
+        allowNull: false,
+    })
+    declare averagePrice: number;
 
     @Column({ 
         type: DataType.STRING,

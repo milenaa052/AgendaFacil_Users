@@ -13,6 +13,7 @@ export class CreateCompanyDto {
     @IsOptional() @IsString() complement?: string;
     @IsString() category: string;
     @IsString() profession: string;
+    @IsNumber() averagePrice: number;
     @IsEmail({}, { message: 'Email inválido' }) email: string;
     @IsString() password: string;
 }
