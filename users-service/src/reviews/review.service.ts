@@ -41,7 +41,7 @@ export class ReviewService {
             const reviewData = {
                 customerId: createReviewDto.customerId,
                 companyId: createReviewDto.companyId,
-                date: new Date(createReviewDto.date),
+                date: createReviewDto.date,
                 rating: createReviewDto.rating,
                 comment: createReviewDto.comment,
                 status: ReviewStatus.ACTIVE

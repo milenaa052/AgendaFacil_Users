@@ -10,7 +10,7 @@ export enum ReviewStatus {
 export interface ReviewCreationAttributes {
     customerId: number;
     companyId: number;
-    date: Date;
+    date: string;
     rating: number;
     comment: string;
     status: ReviewStatus;
@@ -43,10 +43,10 @@ export class Review extends Model<Review, ReviewCreationAttributes> {
     declare companyId: number;
 
     @Column({ 
-        type: DataType.DATE,
+        type: DataType.STRING,
         allowNull: false 
     })
-    declare date: Date;
+    declare date: string;
 
     @Column({ 
         type: DataType.INTEGER,
