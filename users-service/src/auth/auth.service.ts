@@ -14,6 +14,8 @@ export interface AuthenticatedUser {
     idUser: number;
     name: string;
     email: string;
+    state: string;
+    city: string;
     userType: UserType;
 }
 
@@ -49,6 +51,8 @@ export class AuthService {
                 : (user as Company).idCompany,
             name: user.name,
             email: user.email,
+            state: user.state,
+            city: user.city,
             userType: userType
         };
     }
@@ -102,6 +106,8 @@ export class AuthService {
                     : (user as Company).idCompany,
                 name: user.name,
                 email: user.email,
+                state: user.state,
+                city: user.city,
                 userType: userType
             }
         };
