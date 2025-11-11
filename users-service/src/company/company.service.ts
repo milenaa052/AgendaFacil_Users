@@ -33,7 +33,7 @@ export class CompanyService {
     }
 
     async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
-        const requiredFields = ['name', 'corporateReason', 'cnpj', 'rayKm', 'phone', 'state', 'city', 'street', 'number', 'category', 'profession', 'email', 'password'];
+        const requiredFields = ['name', 'corporateReason', 'cnpj', 'rayKm', 'phone', 'state', 'city', 'street', 'number', 'category', 'profession', 'averagePrice', 'email', 'password'];
         for (const field of requiredFields) {
             if (!createCompanyDto[field]) {
                 throw new BadRequestException('Todos os campos são obrigatórios!');
@@ -84,6 +84,7 @@ export class CompanyService {
                 complement: createCompanyDto.complement,
                 category: createCompanyDto.category,
                 profession: createCompanyDto.profession,
+                averagePrice: createCompanyDto.averagePrice,
                 email: createCompanyDto.email,
                 password: createCompanyDto.password,
                 type: UserType.COMPANY
@@ -124,6 +125,7 @@ export class CompanyService {
         {
             idCompany: number;
             name: string;
+            averagePrice: number;
             reviews: Review[];
         }[]>  
     {
@@ -142,6 +144,7 @@ export class CompanyService {
         const availableCompanies: {
             idCompany: number;
             name: string;
+            averagePrice: number;
             averageRating: number;
             reviews: Review[];
         }[] = [];
@@ -183,6 +186,7 @@ export class CompanyService {
                     availableCompanies.push({
                         idCompany: company.idCompany,
                         name: company.name,
+                        averagePrice: company.averagePrice,
                         averageRating,
                         reviews: reviews as Review[]
                     });
@@ -202,6 +206,7 @@ export class CompanyService {
                     availableCompanies.push({
                         idCompany: company.idCompany,
                         name: company.name,
+                        averagePrice: company.averagePrice,
                         averageRating,
                         reviews: reviews as Review[]
                     });
