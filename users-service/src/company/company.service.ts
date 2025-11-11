@@ -6,6 +6,7 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { UserType } from './company.model';
 import { CustomerService } from 'src/customer/customer.service';
+import { Review } from 'src/reviews/review.model';
 import { HttpService } from 'src/http/http.service';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class CompanyService {
         private readonly companyModel: typeof Company,
         @Inject(forwardRef(() => CustomerService))
         private customerService: CustomerService,
+        @InjectModel(Review) private reviewModel: typeof Review,
         private http: HttpService
     ) {}
 
@@ -118,7 +120,13 @@ export class CompanyService {
         date: string,
         hour: string,
         token: string
-    ) {
+    ): Promise<
+        {
+            idCompany: number;
+            name: string;
+            reviews: Review[];
+        }[]>  
+    {
         if (!state || !city || !category || !profession || !date || !hour) {
             throw new BadRequestException('Todos os parâmetros são obrigatórios!');
         }
@@ -131,7 +139,12 @@ export class CompanyService {
             throw new NotFoundException('Nenhuma empresa encontrada com os filtros informados!');
         }
 
-        const availableCompanies: Company[] = [];
+        const availableCompanies: {
+            idCompany: number;
+            name: string;
+            averageRating: number;
+            reviews: Review[];
+        }[] = [];
 
         for (const company of companies) {
             try {
@@ -158,20 +171,47 @@ export class CompanyService {
                 });
 
                 if (!hasConflict) {
-                    availableCompanies.push(company);
-                }
+                    const reviews = await this.reviewModel.findAll({
+                        where: { companyId: company.idCompany },
+                        order: [['date', 'DESC']]
+                    });
 
-            } catch (error) {
-                if (error.response?.status === 404) {
-                    availableCompanies.push(company);
+                    const averageRating = reviews.length 
+                        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+                        : 0;
+
+                    availableCompanies.push({
+                        idCompany: company.idCompany,
+                        name: company.name,
+                        averageRating,
+                        reviews: reviews as Review[]
+                    });
+                }
+            } catch (error: unknown) {
+                const err = error as any;
+
+                if (err.response?.status === 404) {
+                    const reviews = await this.reviewModel.findAll({
+                        where: { companyId: company.idCompany },
+                        order: [['date', 'DESC']]
+                    });
+                    const averageRating = reviews.length 
+                        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+                        : 0;
+
+                    availableCompanies.push({
+                        idCompany: company.idCompany,
+                        name: company.name,
+                        averageRating,
+                        reviews: reviews as Review[]
+                    });
                 } else {
                     throw new BadRequestException(
-                        error.response?.data?.message || 'Erro ao verificar disponibilidade'
+                        err.response?.data?.message || 'Erro ao verificar disponibilidade'
                     );
                 }
             }
         }
-
         return availableCompanies;
     }
 
