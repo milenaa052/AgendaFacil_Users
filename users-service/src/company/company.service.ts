@@ -159,6 +159,7 @@ export class CompanyService {
                 const schedulings = response.data;
 
                 const hasConflict = schedulings.some((scheduling: any) => {
+                    if (scheduling.status === 'CANCELLED') return false;
                     if (scheduling.startDate !== date) return false;
 
                     const toMinutes = (h: string) => {
