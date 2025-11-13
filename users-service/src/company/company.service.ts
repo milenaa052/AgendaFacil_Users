@@ -8,6 +8,7 @@ import { UserType } from './company.model';
 import { CustomerService } from 'src/customer/customer.service';
 import { Review } from 'src/reviews/review.model';
 import { HttpService } from 'src/http/http.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class CompanyService {
@@ -17,7 +18,8 @@ export class CompanyService {
         @Inject(forwardRef(() => CustomerService))
         private customerService: CustomerService,
         @InjectModel(Review) private reviewModel: typeof Review,
-        private http: HttpService
+        private http: HttpService,
+        private redis: RedisService
     ) {}
 
     async checkEmailExists(email: string) {
@@ -133,6 +135,14 @@ export class CompanyService {
             throw new BadRequestException('Todos os parâmetros são obrigatórios!');
         }
 
+        const cacheKey = `companies:${state}:${city}:${category}:${profession}`;
+
+        const cachedData = await this.redis.getClient().get(cacheKey);
+        if (cachedData) {
+            console.log(`♻️ Retornando empresas do cache (${cacheKey})`);
+            return JSON.parse(cachedData);
+        }
+
         const companies = await this.companyModel.findAll({
             where: { state, city, category, profession }
         });
@@ -224,7 +234,25 @@ export class CompanyService {
             'Nenhum profissional com horário disponível, volte na tela anterior e escolha outro horário.'
         );
     }
+        await this.redis.getClient().set(cacheKey, JSON.stringify(availableCompanies), 'EX', 300);
+        console.log(`💾 Empresas salvas no cache (${cacheKey}) com TTL de 300s`);
+
         return availableCompanies;
+    }
+
+    async invalidateCompanyCache(
+        state: string,
+        city: string,
+        category: string,
+        profession: string,
+    ) {
+        const pattern = `companies:${state}:${city}:${category}:${profession}:*`;
+        const keys = await this.redis.getClient().keys(pattern);
+
+        for (const key of keys) {
+            await this.redis.getClient().del(key);
+            console.log(`🗑️ Cache invalidado: ${key}`);
+        }
     }
 
     async update(id: number, companyId: number, updateCompanyDto: UpdateCompanyDto) {

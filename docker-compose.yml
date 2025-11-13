@@ -12,6 +12,8 @@ services:
       DB_NAME: usersdb
       DB_PORT: 5432
       SCHEDULING_API: http://service-scheduling:3000
+      REDIS_HOST: redis-users
+      REDIS_PORT: 6379
     env_file:
       - users-service/.env
     depends_on:
