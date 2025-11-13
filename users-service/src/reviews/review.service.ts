@@ -6,13 +6,15 @@ import { UpdateReviewDto } from './dto/update-reviews.dto';
 import { ReviewStatus } from './review.model';
 import { Customer } from 'src/customer/customer.model';
 import { Company } from 'src/company/company.model';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class ReviewService {
     constructor(
         @InjectModel(Review) private reviewModel: typeof Review,
         @InjectModel(Customer) private customerModel: typeof Customer,
-        @InjectModel(Company) private companyModel: typeof Company
+        @InjectModel(Company) private companyModel: typeof Company,
+        private redis: RedisService
     ) {}
 
     async create(createReviewDto: CreateReviewDto): Promise<Review> {
@@ -47,7 +49,12 @@ export class ReviewService {
                 status: ReviewStatus.ACTIVE
             };
 
-            return await this.reviewModel.create(reviewData);
+            const review = await this.reviewModel.create(reviewData);
+
+            const cacheKey = `company_reviews:${createReviewDto.companyId}`;
+            await this.redis.getClient().del(cacheKey);
+
+            return review;
         } catch (error) {
             throw new BadRequestException('Erro ao criar a avaliação!');
         }
@@ -65,8 +72,21 @@ export class ReviewService {
     }
 
     async findByCompanyId(companyId: number) {
+        if(!companyId) {
+            throw new NotFoundException('Empresa não encontrada!');
+        }
+
+        const cacheKey = `company_reviews:${companyId}`;
+        const client = this.redis.getClient();
+
+        const cached = await client.get(cacheKey);
+        if (cached) {
+            console.log(`✅ Dados de reviews carregados do cache (${cacheKey})`);
+            return JSON.parse(cached);
+        }
+
         const company = await this.companyModel.findByPk(companyId);
-        if(!company) {
+        if (!company) {
             throw new NotFoundException('Empresa não encontrada!');
         }
 
@@ -84,6 +104,10 @@ export class ReviewService {
             ],
             order: [['date', 'DESC']]
         });
+
+        await client.setex(cacheKey, 300, JSON.stringify(reviews));
+        console.log(`💾 Cache criado para ${cacheKey} (TTL 300s)`);
+
         return reviews;
     }
 
@@ -118,6 +142,11 @@ export class ReviewService {
         try {
             Object.assign(review, dto);
             await review.save();
+
+            const cacheKey = `company_reviews:${review.companyId}`;
+            await this.redis.getClient().del(cacheKey);
+            console.log(`🧹 Cache invalidado: ${cacheKey}`);
+            
             return review;
         } catch (error) {
             throw new BadRequestException('Erro ao atualizar a avaliação!');

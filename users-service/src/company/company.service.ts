@@ -92,7 +92,12 @@ export class CompanyService {
                 type: UserType.COMPANY
             };
 
-            return await this.companyModel.create(companyData);
+            const company = await this.companyModel.create(companyData);
+
+            const cacheKey = `company:${createCompanyDto}`;
+            await this.redis.getClient().del(cacheKey);
+
+            return company
         } catch (error) {
             throw new BadRequestException('Erro ao criar usuário!');
         }
@@ -295,6 +300,11 @@ export class CompanyService {
         try {
             Object.assign(company, updateCompanyDto);
             await company.save();
+
+            const cacheKey = `company:${company.idCompany}`;
+            await this.redis.getClient().del(cacheKey);
+            console.log(`🧹 Cache invalidado: ${cacheKey}`);
+
             return company;
 
         } catch (error) {
