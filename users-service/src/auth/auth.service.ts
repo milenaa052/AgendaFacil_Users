@@ -16,6 +16,9 @@ export interface AuthenticatedUser {
     email: string;
     state: string;
     city: string;
+    street: string;
+    number: number;
+    complement?: string;
     userType: UserType;
 }
 
@@ -53,6 +56,9 @@ export class AuthService {
             email: user.email,
             state: user.state,
             city: user.city,
+            street: user.street,
+            number: user.number,
+            complement: user.complement,
             userType: userType
         };
     }
@@ -108,6 +114,9 @@ export class AuthService {
                 email: user.email,
                 state: user.state,
                 city: user.city,
+                street: user.street,
+                number: user.number,
+                complement: user.complement,
                 userType: userType
             }
         };

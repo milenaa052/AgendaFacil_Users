@@ -17,6 +17,9 @@ export interface ProfileResponse {
         email: string;
         state: string;
         city: string;
+        street: string;
+        number: number;
+        complement: string;
         userType: 'CUSTOMER' | 'COMPANY';
     };
 }
