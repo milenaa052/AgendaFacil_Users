@@ -142,10 +142,19 @@ export class CompanyService {
 
         const cacheKey = `companies:${state}:${city}:${category}:${profession}`;
 
-        const cachedData = await this.redis.getClient().get(cacheKey);
-        if (cachedData) {
-            console.log(`♻️ Retornando empresas do cache (${cacheKey})`);
-            return JSON.parse(cachedData);
+        try {
+            const cache = await this.redis.getClient();
+
+            const pong = await cache.ping();
+            console.log("Redis ping response:", pong);
+
+            const cachedData = await cache.get(cacheKey);
+            if (cachedData) {
+                console.log(`♻️ Retornando empresas do cache (${cacheKey})`);
+                return JSON.parse(cachedData);
+            }
+        } catch (error) {
+            console.log("❌ Erro ao acessar o cache:", error);
         }
 
         const companies = await this.companyModel.findAll({
