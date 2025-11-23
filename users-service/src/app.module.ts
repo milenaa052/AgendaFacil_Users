@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ReviewModule } from './reviews/review.module';
 import { RedisModule } from './redis/redis.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RedisModule } from './redis/redis.module';
       synchronize: true,
       logging: false,
     }),
+    AdminModule,
     CustomerModule,
     CompanyModule,
     AuthModule,

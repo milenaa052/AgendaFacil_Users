@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -7,9 +7,11 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { CustomerModule } from '../customer/customer.module';
 import { CompanyModule } from '../company/company.module';
+import { AdminModule } from 'src/admin/admin.module';
 
 @Module({
     imports: [
+        forwardRef(() => AdminModule),
         CustomerModule,
         CompanyModule,
         PassportModule,
@@ -18,7 +20,6 @@ import { CompanyModule } from '../company/company.module';
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
                 secret: configService.get<string>('JWT_SECRET'),
-                signOptions: { expiresIn: '7d' },
             }),
             inject: [ConfigService],
         }),

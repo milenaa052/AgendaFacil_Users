@@ -1,23 +1,25 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { CustomerService } from '../customer/customer.service';
 import { Customer } from '../customer/customer.model';
 import { Company } from 'src/company/company.model';
+import { Admin } from 'src/admin/admin.model';
+import { AdminService } from 'src/admin/admin.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './types/jwt-payload.interface';
 import { LoginResponse, ProfileResponse } from './types/auth-response.interface';
 import { CompanyService } from 'src/company/company.service';
 
-export type UserType = 'CUSTOMER' | 'COMPANY';
+export type UserType = 'CUSTOMER' | 'COMPANY' | 'ADMIN';
 
 export interface AuthenticatedUser {
     idUser: number;
     name: string;
     email: string;
-    state: string;
-    city: string;
-    street: string;
-    number: number;
+    state?: string;
+    city?: string;
+    street?: string;
+    number?: number;
     complement?: string;
     userType: UserType;
 }
@@ -27,20 +29,26 @@ export class AuthService {
     constructor(
         private customerService: CustomerService,
         private companyService: CompanyService,
+        private adminService: AdminService,
         private jwtService: JwtService,
     ) {}
 
     async validateUser(email: string, password: string): Promise<AuthenticatedUser> {
-        let user: Customer | Company | null = await this.customerService.findByEmail(email);
+        let user: Customer | Company | Admin | null = await this.customerService.findByEmail(email);
         let userType: UserType = 'CUSTOMER';
 
         if (!user) {
             user = await this.companyService.findByEmail(email);
             userType = 'COMPANY';
         }
+
+        if (!user) {
+            user = await this.adminService.findByEmail(email);
+            userType = 'ADMIN';
+        }
         
         if (!user) {
-            throw new UnauthorizedException('Credenciais Inválidas!');
+        throw new UnauthorizedException('Credenciais Inválidas!');
         }
 
         const isPasswordValid = await user.validatePassword(password);
@@ -48,17 +56,29 @@ export class AuthService {
             throw new UnauthorizedException('Credenciais Inválidas!');
         }
 
+        let idUser: number;
+        
+        if (userType === 'CUSTOMER') {
+            idUser = (user as Customer).idCustomer;
+        } else if (userType === 'COMPANY') {
+            idUser = (user as Company).idCompany;
+        } else {
+            idUser = (user as Admin).idAdmin;
+        }
+
+        const addressFields = userType !== 'ADMIN' ? {
+            state: (user as Customer | Company).state,
+            city: (user as Customer | Company).city,
+            street: (user as Customer | Company).street,
+            number: (user as Customer | Company).number,
+            complement: (user as Customer | Company).complement,
+        } : {};
+
         return {
-            idUser: userType === 'CUSTOMER' 
-                ? (user as Customer).idCustomer 
-                : (user as Company).idCompany,
+            idUser: idUser,
             name: user.name,
             email: user.email,
-            state: user.state,
-            city: user.city,
-            street: user.street,
-            number: user.number,
-            complement: user.complement,
+            ...addressFields,
             userType: userType
         };
     }
@@ -84,39 +104,59 @@ export class AuthService {
             userType: user.userType
         };
 
+        let signOptions: JwtSignOptions = {}; 
+
+        if (user.userType !== 'ADMIN') {
+            signOptions.expiresIn = '7d';
+        }
+
         return {
             message: 'Login realizado com sucesso!',
-            token: this.jwtService.sign(payload),
+            token: this.jwtService.sign(payload, signOptions), 
             user: user
         };
     }
 
     async getProfile(userId: number, userType: UserType): Promise<ProfileResponse> {
-        let user: Customer | Company | null = null;
+        let user: Customer | Company | Admin | null = null;
 
         if (userType === 'CUSTOMER') {
             user = await this.customerService.findById(userId);
         } else if (userType === 'COMPANY') {
             user = await this.companyService.findById(userId);
+        } else if (userType === 'ADMIN') {
+            user = await this.adminService.findById(userId);
         }
         
         if (!user) {
             throw new UnauthorizedException('Usuário não encontrado!');
         }
 
+        let idUser: number;
+        
+        if (userType === 'CUSTOMER') {
+            idUser = (user as Customer).idCustomer;
+        } else if (userType === 'COMPANY') {
+            idUser = (user as Company).idCompany;
+        } else {
+            idUser = (user as Admin).idAdmin;
+        }
+
+        const addressFields = userType !== 'ADMIN' ? {
+            state: (user as Customer | Company).state,
+            city: (user as Customer | Company).city,
+            street: (user as Customer | Company).street,
+            number: (user as Customer | Company).number,
+            complement: (user as Customer | Company).complement,
+        } : {};
+
         return {
             message: 'Usuário autenticado com sucesso!',
             user: {
-                idUser: userType === 'CUSTOMER' 
-                    ? (user as Customer).idCustomer 
-                    : (user as Company).idCompany,
+                idUser: idUser,
                 name: user.name,
                 email: user.email,
-                state: user.state,
-                city: user.city,
-                street: user.street,
-                number: user.number,
-                complement: user.complement,
+                ...addressFields,
                 userType: userType
             }
         };
@@ -131,6 +171,11 @@ export class AuthService {
         const company = await this.companyService.findByEmail(email);
         if (company) {
             return { exists: true, userType: 'COMPANY' };
+        }
+
+        const admin = await this.adminService.findByEmail(email);
+        if (admin) {
+            return { exists: true, userType: 'ADMIN' };
         }
 
         return { exists: false };
