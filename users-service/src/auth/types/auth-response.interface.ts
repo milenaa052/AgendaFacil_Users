@@ -5,7 +5,7 @@ export interface LoginResponse {
         idUser: number;
         name: string;
         email: string;
-        userType: 'CUSTOMER' | 'COMPANY';
+        userType: 'CUSTOMER' | 'COMPANY' | 'ADMIN';
     };
 }
 
@@ -15,11 +15,11 @@ export interface ProfileResponse {
         idUser: number;
         name: string;
         email: string;
-        state: string;
-        city: string;
-        street: string;
-        number: number;
-        complement: string;
-        userType: 'CUSTOMER' | 'COMPANY';
+        state?: string;
+        city?: string;
+        street?: string;
+        number?: number;
+        complement?: string;
+        userType: 'CUSTOMER' | 'COMPANY' | 'ADMIN';
     };
 }
