@@ -94,9 +94,18 @@ export class CompanyService {
 
             const company = await this.companyModel.create(companyData);
 
-            const cacheKey = `company:${createCompanyDto}`;
-            await this.redis.getClient().del(cacheKey);
-            console.log(`🗑️ Cache invalidado: ${cacheKey}`);
+            const cacheKey = `companies:${createCompanyDto.state}:${createCompanyDto.city}:${createCompanyDto.category}:${createCompanyDto.profession}`;
+            try {
+                const result = await this.redis.getClient().del(cacheKey);
+                
+                if (result > 0) {
+                    console.log(`🗑️ Cache invalidado (CREATE) com sucesso: ${cacheKey}`);
+                } else {
+                    console.log(`❕ Cache não encontrado para invalidação (CREATE): ${cacheKey}`);
+                }
+            } catch (error) {
+                console.error(`❌ ERRO ao tentar invalidar cache (CREATE): ${cacheKey}`, error);
+            }
 
             return company
         } catch (error) {
@@ -311,7 +320,7 @@ export class CompanyService {
             Object.assign(company, updateCompanyDto);
             await company.save();
 
-            const cacheKey = `company:${company.idCompany}`;
+            const cacheKey = `companies:${company.idCompany}`;
             await this.redis.getClient().del(cacheKey);
             console.log(`🗑️ Cache invalidado: ${cacheKey}`);
 
