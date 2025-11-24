@@ -96,6 +96,7 @@ export class CompanyService {
 
             const cacheKey = `company:${createCompanyDto}`;
             await this.redis.getClient().del(cacheKey);
+            console.log(`🗑️ Cache invalidado: ${cacheKey}`);
 
             return company
         } catch (error) {
@@ -312,7 +313,7 @@ export class CompanyService {
 
             const cacheKey = `company:${company.idCompany}`;
             await this.redis.getClient().del(cacheKey);
-            console.log(`🧹 Cache invalidado: ${cacheKey}`);
+            console.log(`🗑️ Cache invalidado: ${cacheKey}`);
 
             return company;
 

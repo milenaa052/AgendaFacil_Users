@@ -53,6 +53,7 @@ export class ReviewService {
 
             const cacheKey = `company_reviews:${createReviewDto.companyId}`;
             await this.redis.getClient().del(cacheKey);
+            console.log(`🗑️ Cache invalidado: ${cacheKey}`);
 
             return review;
         } catch (error) {
@@ -145,7 +146,7 @@ export class ReviewService {
 
             const cacheKey = `company_reviews:${review.companyId}`;
             await this.redis.getClient().del(cacheKey);
-            console.log(`🧹 Cache invalidado: ${cacheKey}`);
+            console.log(`🗑️ Cache invalidado: ${cacheKey}`);
             
             return review;
         } catch (error) {
