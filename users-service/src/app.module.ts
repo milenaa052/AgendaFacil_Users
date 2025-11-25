@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
+import { join } from 'path';
 import { CustomerModule } from './customer/customer.module';
 import { CompanyModule } from './company/company.module';
 import { AuthModule } from './auth/auth.module';
@@ -13,7 +14,7 @@ import { AdminModule } from './admin/admin.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env'
+      envFilePath: '.env',
     }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -32,7 +33,7 @@ import { AdminModule } from './admin/admin.module';
     AuthModule,
     FavoritesModule,
     ReviewModule,
-    RedisModule
+    RedisModule,
   ],
 })
 export class AppModule {}

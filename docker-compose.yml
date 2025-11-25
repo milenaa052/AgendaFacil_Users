@@ -16,6 +16,8 @@ services:
       REDIS_PORT: 6379
     env_file:
       - users-service/.env
+    volumes:
+      - ./users-service/uploads:/usr/src/app/uploads
     depends_on:
       users-db:
         condition: service_healthy
@@ -57,6 +59,7 @@ services:
     restart: always
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./users-service/uploads:/usr/share/nginx/uploads:ro
     ports:
       - "8080:8080"
     depends_on:
