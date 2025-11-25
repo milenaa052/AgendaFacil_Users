@@ -47,7 +47,6 @@ export class CompanyService {
       return true;
     }
   }
-
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
     const requiredFields = [
       'name',
@@ -65,6 +64,7 @@ export class CompanyService {
       'email',
       'password',
     ];
+
     for (const field of requiredFields) {
       if (!createCompanyDto[field]) {
         throw new BadRequestException('Todos os campos são obrigatórios!');
@@ -125,9 +125,23 @@ export class CompanyService {
 
       const company = await this.companyModel.create(companyData);
 
-      const cacheKey = `company:${createCompanyDto}`;
-      await this.redis.getClient().del(cacheKey);
-      console.log(`🗑️ Cache invalidado: ${cacheKey}`);
+      // Try to invalidate the cache for lists in the same region/category/profession
+      const cacheKey = `companies:${createCompanyDto.state}:${createCompanyDto.city}:${createCompanyDto.category}:${createCompanyDto.profession}`;
+      try {
+        const result = await this.redis.getClient().del(cacheKey);
+        if (result > 0) {
+          console.log(`🗑️ Cache invalidado (CREATE) com sucesso: ${cacheKey}`);
+        } else {
+          console.log(
+            `❕ Cache não encontrado para invalidação (CREATE): ${cacheKey}`,
+          );
+        }
+      } catch (error) {
+        console.error(
+          `❌ ERRO ao tentar invalidar cache (CREATE): ${cacheKey}`,
+          error,
+        );
+      }
 
       return company;
     } catch (error) {
