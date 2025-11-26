@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
+import { MulterExceptionFilter } from './common/filters/multer-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -13,7 +14,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve uploads folder as static assets (configurable via UPLOAD_DIR)
   const uploadDir = process.env.UPLOAD_DIR || 'uploads';
   app.useStaticAssets(join(__dirname, '..', uploadDir), {
     prefix: '/uploads',
@@ -25,6 +25,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new MulterExceptionFilter());
   await app.listen(3000, '0.0.0.0');
 }
 

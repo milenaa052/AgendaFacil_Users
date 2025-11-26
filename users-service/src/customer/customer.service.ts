@@ -212,20 +212,17 @@ export class CustomerService {
       throw new BadRequestException('Arquivo não enviado ou inválido');
     }
 
-    // Strong validation: check magic-bytes (file-type) and extension
     try {
       const { fileTypeFromFile } = await import('file-type');
       const fileType = await fileTypeFromFile(file.path);
       const allowedExts = ['jpg', 'jpeg', 'png'];
       if (!fileType || !allowedExts.includes(fileType.ext)) {
-        // remove invalid file from disk
         await removeFileByUrl(file.path);
         throw new BadRequestException(
           'Arquivo inválido. Apenas imagens jpg, jpeg e png são permitidas.',
         );
       }
 
-      // validate original extension matches detected extension
       const originalExt = extname(file.originalname || '')
         .replace('.', '')
         .toLowerCase();
@@ -237,13 +234,10 @@ export class CustomerService {
       }
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
-      // on unexpected errors, remove uploaded file and return generic error
       try {
         if (file && file.path && existsSync(file.path))
           await removeFileByUrl(file.path);
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       throw new BadRequestException('Erro ao validar imagem enviada');
     }
 
