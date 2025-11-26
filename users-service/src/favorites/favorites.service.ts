@@ -59,6 +59,7 @@ export class FavoritesService {
             throw new NotFoundException('Favorito não encontrado!');
         }
 
+        await favorites.destroy();
         return { message: 'Favorito deletado com sucesso!' };
     }
 }
