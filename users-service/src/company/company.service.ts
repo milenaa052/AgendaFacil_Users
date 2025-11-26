@@ -123,27 +123,8 @@ export class CompanyService {
         type: UserType.COMPANY,
       };
 
-      const company = await this.companyModel.create(companyData);
+      return await this.companyModel.create(companyData);
 
-      // Try to invalidate the cache for lists in the same region/category/profession
-      const cacheKey = `companies:${createCompanyDto.state}:${createCompanyDto.city}:${createCompanyDto.category}:${createCompanyDto.profession}`;
-      try {
-        const result = await this.redis.getClient().del(cacheKey);
-        if (result > 0) {
-          console.log(`🗑️ Cache invalidado (CREATE) com sucesso: ${cacheKey}`);
-        } else {
-          console.log(
-            `❕ Cache não encontrado para invalidação (CREATE): ${cacheKey}`,
-          );
-        }
-      } catch (error) {
-        console.error(
-          `❌ ERRO ao tentar invalidar cache (CREATE): ${cacheKey}`,
-          error,
-        );
-      }
-
-      return company;
     } catch (error) {
       throw new BadRequestException('Erro ao criar usuário!');
     }
@@ -186,23 +167,6 @@ export class CompanyService {
       throw new BadRequestException('Todos os parâmetros são obrigatórios!');
     }
 
-    const cacheKey = `companies:${state}:${city}:${category}:${profession}`;
-
-    try {
-      const cache = await this.redis.getClient();
-
-      const pong = await cache.ping();
-      console.log('Redis ping response:', pong);
-
-      const cachedData = await cache.get(cacheKey);
-      if (cachedData) {
-        console.log(`♻️ Retornando empresas do cache (${cacheKey})`);
-        return JSON.parse(cachedData);
-      }
-    } catch (error) {
-      console.log('❌ Erro ao acessar o cache:', error);
-    }
-
     const companies = await this.companyModel.findAll({
       where: { state, city, category, profession },
     });
@@ -232,7 +196,41 @@ export class CompanyService {
 
         const hasConflict = schedulings.some((scheduling: any) => {
           if (scheduling.status === 'CANCELLED') return false;
-          if (scheduling.startDate !== date) return false;
+
+          const isSameDate = (d1: string, d2: string) => d1 === d2;
+          const toDate = (str: string) => new Date(str + "T00:00:00");
+
+          const matchesRecurrence = (scheduling: any, requestedDate: string) => {
+            const start = toDate(scheduling.startDate);
+            const req = toDate(requestedDate);
+
+            if (req < start) return false;
+
+            switch (scheduling.repeatScheduling) {
+              case "DAYS":
+                return true;
+
+              case "WEEKS":
+                const diffDaysWeek = Math.floor((req.getTime() - start.getTime()) / (1000*60*60*24));
+                return diffDaysWeek % 7 === 0;
+
+              case "MONTHS":
+                return (
+                  req.getDate() === start.getDate()
+                );
+
+              case "YEARS":
+                return (
+                  req.getDate() === start.getDate() &&
+                  req.getMonth() === start.getMonth()
+                );
+
+              default:
+                return isSameDate(scheduling.startDate, requestedDate);
+            }
+          };
+
+          if (!matchesRecurrence(scheduling, date)) return false;
 
           const toMinutes = (h: string) => {
             const [hh, mm] = h.split(':').map(Number);
@@ -243,7 +241,10 @@ export class CompanyService {
           const start = toMinutes(scheduling.startHour);
           const end = toMinutes(scheduling.endHour);
 
-          return requested >= start && requested < end;
+          const requestedStart = requested;
+          const requestedEnd = requested + 1;
+
+          return requestedStart < end && start < requestedEnd;
         });
 
         if (!hasConflict) {
@@ -298,27 +299,8 @@ export class CompanyService {
         'Nenhum profissional com horário disponível, volte na tela anterior e escolha outro horário.',
       );
     }
-    await this.redis
-      .getClient()
-      .set(cacheKey, JSON.stringify(availableCompanies), 'EX', 300);
-    console.log(`💾 Empresas salvas no cache (${cacheKey}) com TTL de 300s`);
 
     return availableCompanies;
-  }
-
-  async invalidateCompanyCache(
-    state: string,
-    city: string,
-    category: string,
-    profession: string,
-  ) {
-    const pattern = `companies:${state}:${city}:${category}:${profession}:*`;
-    const keys = await this.redis.getClient().keys(pattern);
-
-    for (const key of keys) {
-      await this.redis.getClient().del(key);
-      console.log(`🗑️ Cache invalidado: ${key}`);
-    }
   }
 
   async update(
@@ -371,12 +353,8 @@ export class CompanyService {
     try {
       Object.assign(company, updateCompanyDto);
       await company.save();
-
-      const cacheKey = `company:${company.idCompany}`;
-      await this.redis.getClient().del(cacheKey);
-      console.log(`🗑️ Cache invalidado: ${cacheKey}`);
-
       return company;
+
     } catch (error) {
       throw new BadRequestException('Erro ao atualizar o usuário!');
     }
