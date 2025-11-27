@@ -329,6 +329,10 @@ export class CompanyService {
       }
     }
 
+    if (updateCompanyDto.email && updateCompanyDto.email !== company.email) {
+      throw new BadRequestException('Email não pode ser alterado!');
+    }
+
     if (updateCompanyDto.currentPassword && updateCompanyDto.newPassword) {
       const correctPassword = await company.validatePassword(
         updateCompanyDto.currentPassword,

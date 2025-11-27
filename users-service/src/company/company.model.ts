@@ -33,6 +33,7 @@ export interface CompanyCreationAttributes {
   averagePrice: number;
   email: string;
   password: string;
+  avatarUrl?: string;
   type: UserType;
 }
 
