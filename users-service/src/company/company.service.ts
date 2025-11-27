@@ -262,7 +262,7 @@ export class CompanyService {
             idCompany: company.idCompany,
             name: company.name,
             averagePrice: company.averagePrice,
-            averageRating,
+            averageRating: Number(averageRating.toFixed(1)),
             reviews: reviews as Review[],
           });
         }
@@ -283,7 +283,7 @@ export class CompanyService {
             idCompany: company.idCompany,
             name: company.name,
             averagePrice: company.averagePrice,
-            averageRating,
+            averageRating: Number(averageRating.toFixed(1)),
             reviews: reviews as Review[],
           });
         } else {

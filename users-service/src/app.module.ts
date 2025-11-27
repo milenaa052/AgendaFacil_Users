@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { join } from 'path';
 import { CustomerModule } from './customer/customer.module';
 import { CompanyModule } from './company/company.module';
 import { AuthModule } from './auth/auth.module';
