@@ -79,6 +79,17 @@ export class CustomerController {
         'Field name missing',
       );
     }
-    return this.customerService.updateAvatar(id, loggedUser, userType, file);
+
+    const updatedCustomer = await this.customerService.updateAvatar(
+      id,
+      loggedUser,
+      userType,
+      file,
+    );
+    return {
+      message: 'Avatar atualizado com sucesso!',
+      avatarUrl: updatedCustomer.avatarUrl,
+      //userType: updatedCustomer.userType,
+    };
   }
 }
