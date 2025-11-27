@@ -25,6 +25,12 @@ export class FavoritesController {
         return this.favoritesService.findById(id);
     }
 
+    @Get('/customer/:customerId')
+    @UseGuards(AuthGuard('jwt'))
+    async findByCustomerFavorites(@Param('customerId', ParseIntPipe) customerId: number) {
+        return this.favoritesService.findByCustomerFavorites(customerId);
+    }
+
     @Delete(':id')
     @UseGuards(AuthGuard('jwt'))
     async deleteById(@Param('id', ParseIntPipe) id: number) {
